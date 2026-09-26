@@ -163,17 +163,12 @@ body {
   font-size: 0.9rem;
 }
 
-.data-source-badge {
-  display: inline-block;
-  font-size: 0.7rem;
-  padding: 3px 8px;
-  border-radius: 999px;
-  margin-bottom: 10px;
-  background: var(--assistant-bubble);
+.heatmap-eyebrow {
+  font-size: 0.72rem;
   color: var(--text-dim);
+  margin-top: 2px;
+  font-style: italic;
 }
-.data-source-badge.real { color: #1f8a4c; }
-.data-source-badge.mock { color: #b8860b; }
 
 .compare-links {
   font-size: 0.78rem;

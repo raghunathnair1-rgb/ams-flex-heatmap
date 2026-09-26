@@ -48,19 +48,20 @@ export default function Heatmap({ data }) {
 
   if (!data?.days?.length) return null;
 
-  const isMock = (data.source || "").startsWith("mock");
   const links = compareLinks(data.origin, data.destination_iata, cheapest.date);
+  const isLive = (data.source || "").startsWith("amadeus");
 
   return (
     <div className="heatmap">
-      <div className={`data-source-badge ${isMock ? "mock" : "real"}`}>
-        {isMock ? "⚠ Mock data" : "✓ Live Amadeus data"} &middot; {data.source}
-      </div>
-
       <div className="heatmap-header">
         <div>
           <div className="heatmap-title">
             AMS &rarr; {data.destination} &middot; flex-date prices
+          </div>
+          <div className="heatmap-eyebrow">
+            {isLive
+              ? "Live fares, refreshed just now"
+              : "Illustrative pricing based on typical AMS routes — connect live fares for real-time quotes"}
           </div>
           <div className="heatmap-subtitle">
             Cheapest: <strong>€{cheapest.price}</strong> on{" "}
