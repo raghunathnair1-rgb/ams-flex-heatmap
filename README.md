@@ -16,14 +16,61 @@ React UI (frontend/)  ->  FastAPI (api/index.py)  ->  Agent loop (api/agent.py, 
   - tool-call limit: 3 tool calls per request
   - retry policy: a failing tool call retries up to 3 times
   - one short system role, nothing else
-- **Tool** (`api/flights.py`): `search_flights(destination, start_date, end_date)`.
-  No live flight API key is wired up, so prices are generated deterministically
-  (seeded by destination + date, with weekday/season effects) — swap this
-  function for a real provider (Amadeus, Duffel, Kiwi Tequila, …) without
-  touching the agent loop or frontend.
+- **Skill / tool** (`api/flights.py`): exactly one skill is registered —
+  `search_flights(destination, start_date, end_date)`. That is the entire
+  tool surface; no code execution, file access, or web-browsing tool exists
+  anywhere in this app. No live flight API key is wired up, so prices are
+  generated deterministically (seeded by destination + date, with
+  weekday/season effects) — swap this function for a real provider (Amadeus,
+  Duffel, Kiwi Tequila, …) without touching the agent loop or frontend.
 - **Frontend** (`frontend/`): React + Vite. Chat panel on the left, calendar
   heatmap (sequential color scale, legend, tooltip, "best day" badge) on the
   right.
+
+## Scope guardrails (`api/guardrails.py`)
+
+This agent does one job — flexible-date flight search out of AMS — and
+nothing else. Enforced in code, not just prompt wording, so it holds even if
+the model is jailbroken:
+
+- **Input filter**: off-topic asks (coding help, "search the web for…",
+  essay/image generation, prompt-injection phrases like "ignore previous
+  instructions") are refused *before* any model call is made — zero tokens
+  spent, zero chance of the model complying.
+- **Tool allowlist**: only `search_flights` may ever be executed. A
+  hallucinated or injected call to any other tool name is rejected in code.
+- **History sanitization**: client-supplied chat history is capped at 6 turns,
+  truncated per message, and only `user`/`assistant` roles are accepted — a
+  crafted payload can't smuggle in a fake `system` role.
+- **Output sanitization**: replies are stripped of code fences as a
+  belt-and-braces check.
+- **Rate limiting**: 20 requests / 5 minutes per client IP on `/api/chat`
+  (best-effort per warm serverless instance).
+- **No API surface beyond the three routes below**: `/docs`, `/redoc`, and the
+  OpenAPI schema are disabled in production (`docs_url=None` etc. in
+  `api/index.py`), so there's nothing to introspect or probe.
+
+The only live endpoints are `GET /api/health`, `GET /api/heatmap`, and
+`POST /api/chat` — there is no web-search, code-execution, or general-purpose
+endpoint anywhere in the app.
+
+## Sandbox
+
+A `Dockerfile` + `docker-compose.yml` run the backend hardened and isolated:
+
+- non-root user (`app`)
+- **read-only root filesystem** (`read_only: true`), with only `/tmp` writable
+- **all Linux capabilities dropped** (`cap_drop: ALL`)
+- `no-new-privileges` security option
+- resource caps: 256 MB memory, 0.5 vCPU, 64 PIDs
+
+```bash
+docker compose up --build
+```
+
+(On Vercel, `api/index.py` already runs as an isolated Fluid Compute function
+— a separate microVM per invocation — so the container sandbox above is for
+local/self-hosted runs, or if you later move the backend off Vercel.)
 
 ## Environment variables
 

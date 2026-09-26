@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    image: ams-flex-heatmap-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    # --- Sandbox hardening ---
+    read_only: true               # container filesystem is read-only
+    tmpfs:
+      - /tmp                      # writable scratch space only
+    cap_drop:
+      - ALL                       # drop all Linux capabilities
+    security_opt:
+      - no-new-privileges:true    # process can't gain new privileges
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 64
+    restart: unless-stopped
