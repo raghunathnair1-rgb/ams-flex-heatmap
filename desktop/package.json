@@ -1,0 +1,42 @@
+{
+  "name": "ams-flex-heatmap-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Desktop shell for the AMS Flex-Date Flight Finder — opens the live app in a native window.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac --publish=never",
+    "dist:win": "electron-builder --win --publish=never",
+    "dist:all": "electron-builder --mac --win --publish=never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.raghunathnair.amsflexheatmap",
+    "productName": "AMS Flex-Date Flight Finder",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.travel",
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true
+    }
+  }
+}

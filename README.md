@@ -14,6 +14,13 @@ See [`AGENTS.md`](AGENTS.md) for how this maps onto harness / loop / skills /
 graph engineering, and [`skills/search_flights.skill.md`](skills/search_flights.skill.md)
 for the skill spec itself.
 
+## Desktop app (Mac/Windows)
+
+A one-click native shell that opens the live app in its own window — see
+[`desktop/README.md`](desktop/README.md). Prebuilt `.dmg`/`.exe` binaries are
+published to [GitHub Releases](../../releases) by CI on tag push
+(`desktop-v*`).
+
 - **Agent loop** (`api/agent.py`): calls Azure AI Foundry (Azure OpenAI-compatible
   chat completions) with function/tool calling. Guardrails:
   - loop cap: 5 model turns per request
