@@ -10,6 +10,10 @@ a calendar heatmap of day-by-day prices and points out the cheapest day.
 React UI (frontend/)  ->  FastAPI (api/index.py)  ->  Agent loop (api/agent.py, max 5 turns)  ->  Tool (api/flights.py: search_flights)
 ```
 
+See [`AGENTS.md`](AGENTS.md) for how this maps onto harness / loop / skills /
+graph engineering, and [`skills/search_flights.skill.md`](skills/search_flights.skill.md)
+for the skill spec itself.
+
 - **Agent loop** (`api/agent.py`): calls Azure AI Foundry (Azure OpenAI-compatible
   chat completions) with function/tool calling. Guardrails:
   - loop cap: 5 model turns per request
