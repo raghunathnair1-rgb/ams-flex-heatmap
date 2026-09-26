@@ -1,14 +1,11 @@
-"""Mock flight-price tool.
-
-No live flight API key is configured, so prices are generated deterministically
-from (origin, destination, date) so the same query always returns the same
-numbers in a session — good enough to demo a flex-date heatmap end to end.
-Swap `search_flights` for a real provider (Amadeus, Duffel, Kiwi Tequila, …)
-without touching the agent loop or the frontend contract.
-"""
+"""Flight-price tool: real Amadeus data when credentials are configured
+(see amadeus_client.py), otherwise a deterministic mock so the app still
+runs without an API key. Every result carries a "source" field so the UI/user
+always knows which one they're looking at — never silently fake."""
 from __future__ import annotations
 
 import hashlib
+import os
 from datetime import date, timedelta
 
 # Rough base fares (EUR, one-way) from Amsterdam (AMS) used to seed the mock.
@@ -68,7 +65,28 @@ def _price_for_date(destination: str, day: date) -> dict:
 
 
 def search_flights(destination: str, start_date: str, end_date: str, origin: str = "AMS") -> dict:
-    """Tool: return a mock price for every day in [start_date, end_date]."""
+    """Tool: real Amadeus fares if AMADEUS_CLIENT_ID/SECRET are configured,
+    else a deterministic mock (clearly labeled) so the app still runs without
+    credentials."""
+    if os.environ.get("AMADEUS_CLIENT_ID") and os.environ.get("AMADEUS_CLIENT_SECRET"):
+        from .amadeus_client import search_flights_real
+
+        try:
+            return search_flights_real(destination, start_date, end_date, origin)
+        except Exception as exc:  # noqa: BLE001 - fall back to mock, but say why
+            import traceback
+
+            traceback.print_exc()  # surfaces in Vercel function logs for debugging
+            result = _search_flights_mock(destination, start_date, end_date, origin)
+            result["source"] = f"mock (Amadeus error: {type(exc).__name__}: {exc})"
+            return result
+
+    result = _search_flights_mock(destination, start_date, end_date, origin)
+    result["source"] = "mock (no AMADEUS_CLIENT_ID/SECRET configured)"
+    return result
+
+
+def _search_flights_mock(destination: str, start_date: str, end_date: str, origin: str = "AMS") -> dict:
     start = date.fromisoformat(start_date)
     end = date.fromisoformat(end_date)
     if end < start:

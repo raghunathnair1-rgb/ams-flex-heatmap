@@ -19,10 +19,16 @@ React UI (frontend/)  ->  FastAPI (api/index.py)  ->  Agent loop (api/agent.py, 
 - **Skill / tool** (`api/flights.py`): exactly one skill is registered —
   `search_flights(destination, start_date, end_date)`. That is the entire
   tool surface; no code execution, file access, or web-browsing tool exists
-  anywhere in this app. No live flight API key is wired up, so prices are
-  generated deterministically (seeded by destination + date, with
-  weekday/season effects) — swap this function for a real provider (Amadeus,
-  Duffel, Kiwi Tequila, …) without touching the agent loop or frontend.
+  anywhere in this app. Runs on a deterministic mock generator (seeded by
+  destination + date, with weekday/season effects) by default, clearly
+  labeled as such in every response's `"source"` field — never presented as
+  real data. `api/amadeus_client.py` is a real-data integration attempt kept
+  as reference wiring: Amadeus for Developers Self-Service (the free tier
+  this was built against) was **permanently shut down in July 2026** — portal
+  decommissioned, API keys disabled, `test.api.amadeus.com` no longer
+  resolves. Swapping in a live provider (Kiwi.com Tequila, Duffel, etc.) means
+  replacing that one file; `flights.py`, the agent loop, and the frontend
+  don't need to change.
 - **Frontend** (`frontend/`): React + Vite. Chat panel on the left, calendar
   heatmap (sequential color scale, legend, tooltip, "best day" badge) on the
   right.

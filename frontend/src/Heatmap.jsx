@@ -15,6 +15,16 @@ function textColorFor(t) {
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+function compareLinks(origin, destIata, date) {
+  const yymmdd = date.replace(/-/g, "").slice(2);
+  return {
+    skyscanner: `https://www.skyscanner.net/transport/flights/${origin.toLowerCase()}/${(destIata || "").toLowerCase()}/${yymmdd}/`,
+    googleFlights: `https://www.google.com/travel/flights?q=${encodeURIComponent(
+      `flights from ${origin} to ${destIata || ""} on ${date}`
+    )}`,
+  };
+}
+
 export default function Heatmap({ data }) {
   const [hovered, setHovered] = useState(null);
 
@@ -38,8 +48,15 @@ export default function Heatmap({ data }) {
 
   if (!data?.days?.length) return null;
 
+  const isMock = (data.source || "").startsWith("mock");
+  const links = compareLinks(data.origin, data.destination_iata, cheapest.date);
+
   return (
     <div className="heatmap">
+      <div className={`data-source-badge ${isMock ? "mock" : "real"}`}>
+        {isMock ? "⚠ Mock data" : "✓ Live Amadeus data"} &middot; {data.source}
+      </div>
+
       <div className="heatmap-header">
         <div>
           <div className="heatmap-title">
@@ -51,8 +68,18 @@ export default function Heatmap({ data }) {
               weekday: "long",
               month: "short",
               day: "numeric",
-            })}{" "}
-            ({cheapest.airline})
+            })}
+            {cheapest.airline && <> ({cheapest.airline})</>}
+          </div>
+          <div className="compare-links">
+            Compare:{" "}
+            <a href={links.skyscanner} target="_blank" rel="noopener noreferrer">
+              Skyscanner
+            </a>{" "}
+            &middot;{" "}
+            <a href={links.googleFlights} target="_blank" rel="noopener noreferrer">
+              Google Flights
+            </a>
           </div>
         </div>
         <Legend min={min} max={max} />
@@ -79,7 +106,7 @@ export default function Heatmap({ data }) {
                 onMouseEnter={() => setHovered(day)}
                 onMouseLeave={() => setHovered(null)}
                 tabIndex={0}
-                aria-label={`${day.date}: €${day.price}, ${day.stops} stop(s), ${day.airline}`}
+                aria-label={`${day.date}: €${day.price}${day.airline ? `, ${day.airline}` : ""}`}
               >
                 <span className="heatmap-daynum">{new Date(day.date).getDate()}</span>
                 <span className="heatmap-price">€{Math.round(day.price)}</span>
@@ -92,9 +119,20 @@ export default function Heatmap({ data }) {
 
       {hovered && (
         <div className="heatmap-tooltip">
-          <strong>{new Date(hovered.date).toDateString()}</strong> &middot; €{hovered.price} &middot;{" "}
-          {hovered.airline} &middot; {hovered.stops === 0 ? "direct" : `${hovered.stops} stop`} &middot;{" "}
-          {Math.round(hovered.duration_min / 60)}h {hovered.duration_min % 60}m
+          <strong>{new Date(hovered.date).toDateString()}</strong> &middot; €{hovered.price}
+          {hovered.airline && <> &middot; {hovered.airline}</>}
+          {hovered.stops !== undefined && (
+            <> &middot; {hovered.stops === 0 ? "direct" : `${hovered.stops} stop`}</>
+          )}
+          {hovered.duration_min !== undefined && (
+            <>
+              {" "}
+              &middot; {Math.round(hovered.duration_min / 60)}h {hovered.duration_min % 60}m
+            </>
+          )}
+          {!hovered.airline && (
+            <span className="tooltip-hint"> &middot; full details shown for cheapest day only</span>
+          )}
         </div>
       )}
     </div>
